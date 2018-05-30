@@ -418,21 +418,42 @@ qqqdiv=pd.read_csv('qqqdiv.csv')
 
 p=[]
 para=[]
-for th3 in tqdm(np.arange(1.001,1.013,0.0001)):
-    profits = triplessdivextreturn(dfdayext3,dfintradict,th3)
-    p.append(np.prod(profits))
-    para.append(th3)
+for t1 in np.arange(1.003,1.009,0.001):
+    for t2 in np.arange(.98,1,0.005):
+        for t3 in np.arange(1.001,1.02,0.001):
+            for t4 in np.arange(.985,.995,0.001):                
+                for t5 in np.arange(1,1.01,0.001):
+                    for t6 in np.arange(.999,1.0,0.0001):
+                        para.append((t1,t2,t3,t4,t5,t6))
+
+import multiprocessing
+from itertools import product
+with multiprocessing.Pool(processes=2) as pool:
+    results = pool.map(ups,para)
+
+
+p=[0]*len(para)
+for pa in tqdm(range(len(para))):
+    p[pa] = ups(dfdayext3,para[pa])
+    
+def ups(df,pas):
+    [t1,t2,t3,t4,t5,t6]=pas
+    profits = triplessdivextreturn(df,dfintradict,t1,t2,t3,t4,t5,t6)
+    return np.prod(profits)
 
 %%cython
 import numpy as np
-def triplessdivextreturn(df,dfintradict,th=1.01):
-    t5=1.0004
-    t2=.985
-    t3=1.0118
+def triplessdivextreturn(df,dfintradict,t1,t2,t3,t4,t5,t6,th=1.01):
+#    t5=1.0004
+#    t2=.985
+#    t3=1.0118
+#    t1=1.006
+#    t4=.989
+#    t6=.9994
     profit = 1
     profits=[]
     profits2=[]
-#    monthlyprof = [1]   
+    monthlyprof = [1]   
     prevmon = '03'
     for i in range(3,len(df)):     
         profit=1
@@ -454,11 +475,11 @@ def triplessdivextreturn(df,dfintradict,th=1.01):
                 profits.append(profit-1e-4)
                 profit = (df.loc[i,'dayClose']/(t2*df.loc[i,'dayOpen'])-1)*3+1
                 profits2.append(profit)
-        elif df.loc[i,'dayOpen']/df.loc[i-1,'dayClose']>1.006:
+        elif df.loc[i,'dayOpen']/df.loc[i-1,'dayClose']>t1:
             profit = (((df.loc[i,'dayClose'])/df.loc[i-1,'dayClose'])-1)*3+1
-        elif df.loc[i,'dayOpen']/df.loc[i-1,'dayClose']<.989:
+        elif df.loc[i,'dayOpen']/df.loc[i-1,'dayClose']<t4:
             profit = (((df.loc[i,'dayClose'])/df.loc[i-1,'dayClose'])-1)*3+1
-        elif df.loc[i,'dayOpen']/df.loc[i-1,'dayClose']<.9994:
+        elif df.loc[i,'dayOpen']/df.loc[i-1,'dayClose']<t6:
             earlyOut=0
             if df.loc[i,'dayHigh']/df.loc[i,'dayOpen']>t3:
 #                print(i)
@@ -481,11 +502,14 @@ def triplessdivextreturn(df,dfintradict,th=1.01):
 #        cdiff = round(df.loc[i,'Adj Close']-df.loc[i,'Close'],2)
 #        if cdiff!=prevdiff:
 #            profits.append(abs(cdiff-prevdiff)/df.loc[i,'Close']+1)
-#        if (qqqall.loc[i,'Date']).split('-')[1]!=prevmon:
-#            monthlyprof.append(np.prod(profits))
-#            prevmon = (qqqall.loc[i,'Date']).split('-')[1]
-#    monthlyprof.append(np.prod(profits))
+        if (df.loc[i,'Date']).split('-')[1]!=prevmon:
+            monthlyprof.append(np.prod(profits))
+            prevmon = (df.loc[i,'Date']).split('-')[1]
+    monthlyprof.append(np.prod(profits))
+    for i in range(len(monthlyprof)-1,0,-1):
+        monthlyprof[i]=monthlyprof[i]/monthlyprof[i-1]
     return profits
+
 
 
 def checkOutTime(df,p):
