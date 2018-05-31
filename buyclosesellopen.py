@@ -426,6 +426,13 @@ for t1 in np.arange(1.003,1.009,0.001):
                     for t6 in np.arange(.999,1.0,0.0001):
                         para.append((t1,t2,t3,t4,t5,t6))
 
+p=[]
+para=[]
+for t7 in tqdm(np.arange(.98,1,0.0001)):
+    p.append(np.prod(triplessdivextreturn(dfdayext3,dfintradict,t7)))
+    para.append(t7)
+
+
 import multiprocessing
 from itertools import product
 with multiprocessing.Pool(processes=2) as pool:
@@ -443,13 +450,14 @@ def ups(df,pas):
 
 %%cython
 import numpy as np
-def triplessdivextreturn(df,dfintradict,t1,t2,t3,t4,t5,t6,th=1.01):
-#    t5=1.0004
-#    t2=.985
-#    t3=1.0118
-#    t1=1.006
-#    t4=.989
-#    t6=.9994
+def triplessdivextreturn(df,dfintradict,t7):
+    t5=1.0004
+    t2=.985
+    t3=1.0118
+    t1=1.006
+    t4=.989
+    t6=.9994
+    th=1.01
     profit = 1
     profits=[]
     profits2=[]
@@ -465,7 +473,7 @@ def triplessdivextreturn(df,dfintradict,t1,t2,t3,t4,t5,t6,th=1.01):
             else:
                 profit = (df.loc[i,'dayOpen']/df.loc[i-1,'dayClose']-1)*3+1#buy
             profits.append(profit-1e-4)
-            if df.loc[i,'dayLow']<.925*df.loc[i,'dayOpen']:
+            if df.loc[i,'dayLow']<.925*df.loc[i,'dayOpen']:#short
                 profit = (1-.925)*3+1
             else:
                 profit = (1-df.loc[i,'dayClose']/df.loc[i,'dayOpen'])*3+1#short
@@ -474,7 +482,7 @@ def triplessdivextreturn(df,dfintradict,t1,t2,t3,t4,t5,t6,th=1.01):
             if df.loc[i,'dayLow']<t2*df.loc[i,'dayOpen']:
                 profits.append(profit-1e-4)
                 profit = (df.loc[i,'dayClose']/(t2*df.loc[i,'dayOpen'])-1)*3+1
-                profits2.append(profit)
+#                profits2.append(profit)
         elif df.loc[i,'dayOpen']/df.loc[i-1,'dayClose']>t1:
             profit = (((df.loc[i,'dayClose'])/df.loc[i-1,'dayClose'])-1)*3+1
         elif df.loc[i,'dayOpen']/df.loc[i-1,'dayClose']<t4:
@@ -491,7 +499,12 @@ def triplessdivextreturn(df,dfintradict,t1,t2,t3,t4,t5,t6,th=1.01):
             if earlyOut==0:
                 profit = (df.loc[i,'dayClose']/df.loc[i-1,'dayClose']-1)*3+1
         elif df.loc[i,'dayHigh']/df.loc[i,'dayOpen']>t5:
-            profit = (t5*df.loc[i,'dayOpen']/df.loc[i-1,'dayClose']-1)*3+1
+            outTime = checkOutTime(dfintradict[df.loc[i,'Date']],t5*df.loc[i,'dayOpen'])
+            if int(outTime.split(':')[0])<13:
+                profit = (t5*df.loc[i,'dayOpen']/df.loc[i-1,'dayClose']-1)*3+1
+                p2 = checkLow2(dfintradict[df.loc[i,'Date']],t7)
+                if p2>0:
+                    profits2.append(p2)
         else:
             profit = (df.loc[i,'dayClose']/df.loc[i-1,'dayClose']-1)*3+1
         if profit!=1:
@@ -508,8 +521,27 @@ def triplessdivextreturn(df,dfintradict,t1,t2,t3,t4,t5,t6,th=1.01):
     monthlyprof.append(np.prod(profits))
     for i in range(len(monthlyprof)-1,0,-1):
         monthlyprof[i]=monthlyprof[i]/monthlyprof[i-1]
-    return profits
+    return profits2
 
+
+def checkLow2(df,p):
+    if '14:30' not in df['Time']:
+        return -1
+    if df.loc[df['Time']=='14:30','Open'].iloc[0]<p*df.loc[df['Time']=='14:00','Open'].iloc[0]:
+        return df.loc[1,'dayClose']/list(df.loc[df['Time']=='14:30','Open'])[0]
+    if df.loc[df['Time']=='15:00','Open'].iloc[0]<p*df.loc[df['Time']=='14:30','Open'].iloc[0]:
+        return df.loc[1,'dayClose']/list(df.loc[df['Time']=='15:00','Open'])[0]
+    if df.loc[df['Time']=='15:30','Open'].iloc[0]<p*df.loc[df['Time']=='15:00','Open'].iloc[0]:
+        return df.loc[1,'dayClose']/list(df.loc[df['Time']=='15:30','Open'])[0]
+    return -1
+def checkLow(df,p):
+    for i in range(len(df)):
+        pbar=0
+        if df.loc[i,'Time']=='14:00':
+            pbar = df.loc[i,'Open']*p
+        if pbar!=0 and df.loc[i,'Low']<pbar:
+            return df.loc[i,'dayClose']/pbar
+    return -1
 
 
 def checkOutTime(df,p):
