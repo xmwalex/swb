@@ -499,9 +499,9 @@ def triplessdivextreturn(df,dfintradict,t7):
             if earlyOut==0:
                 profit = (df.loc[i,'dayClose']/df.loc[i-1,'dayClose']-1)*3+1
         elif df.loc[i,'dayHigh']/df.loc[i,'dayOpen']>t5:
+            profit = (t5*df.loc[i,'dayOpen']/df.loc[i-1,'dayClose']-1)*3+1
             outTime = checkOutTime(dfintradict[df.loc[i,'Date']],t5*df.loc[i,'dayOpen'])
             if int(outTime.split(':')[0])<13:
-                profit = (t5*df.loc[i,'dayOpen']/df.loc[i-1,'dayClose']-1)*3+1
                 p2 = checkLow2(dfintradict[df.loc[i,'Date']],t7)
                 if p2>0:
                     profits2.append(p2)

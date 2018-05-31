@@ -80,12 +80,12 @@ def triplessdivextreturn(df,dfintradict):
                 profit = (df.loc[i,'dayClose']/df.loc[i-1,'dayClose']-1)*3+1
         elif df.loc[i,'dayHigh']/df.loc[i,'dayOpen']>t5:
             profit = (t5*df.loc[i,'dayOpen']/df.loc[i-1,'dayClose']-1)*3+1
-            outTime = checkOutTime(dfintradict[df.loc[i,'Date']],t5*df.loc[i,'dayOpen'])
-            dftmp = dfintradict[df.loc[i,'Date']]
-            if (('14:30' in set(dftmp['Time'])) and ('14:00' in set(dftmp['Time']))) and dftmp.loc[dftmp['Time']=='15:00','Open'].iloc[0]/dftmp.loc[1,'dayOpen']<.99:
-                if int(outTime.split(':')[0])<13:
-                    profits.append(profit)
-                    profit = dftmp.loc[1,'dayClose']/dftmp.loc[dftmp['Time']=='15:30','Open'].iloc[0]
+#            outTime = checkOutTime(dfintradict[df.loc[i,'Date']],t5*df.loc[i,'dayOpen'])
+#            dftmp = dfintradict[df.loc[i,'Date']]
+#            if (('14:30' in set(dftmp['Time'])) and ('14:00' in set(dftmp['Time']))) and dftmp.loc[dftmp['Time']=='15:00','Open'].iloc[0]/dftmp.loc[1,'dayOpen']<.99:
+#                if int(outTime.split(':')[0])<10:
+#                    profits.append(profit)
+#                    profit = dftmp.loc[1,'dayClose']/dftmp.loc[dftmp['Time']=='15:00','Open'].iloc[0]
 #                try:
 #                    p2 = checkLow2(dfintradict[df.loc[i,'Date']],t7)
 #                    if p2>0:
@@ -110,10 +110,16 @@ def triplessdivextreturn(df,dfintradict):
         monthlyprof[i]=monthlyprof[i]/monthlyprof[i-1]
     return profits
 
-profits=triplessdivextreturn(dfdayext3,dfintradict)
-print(np.prod(profits))
-print(gmean(profits))
-print(len(profits))
+#profits=triplessdivextreturn(dfdayext3,dfintradict)
+p=[]
+for i in np.arange(4740,len(dfdayext3),20):
+    dfty = dfdayext3.loc[i:i+1]
+    dfty.reset_index(drop=True,inplace=True)
+    profits = triplessdivextreturn(dfty,dfintradict)
+    p.append(np.prod(profits))
+    print(np.prod(profits))
+    print(gmean(profits))
+    print(len(profits))
 #p=[]
 #para=[]
 #for t7 in tqdm(np.arange(.98,1,0.0001)):
