@@ -128,19 +128,21 @@ def adjustPrice(df):
     #        df.loc[i,'dayClose']=df.loc[i,'dayClose']/2    
     
     
-    qqq2=pd.read_csv('QQQall.csv')
+    df = pd.read_csv('DIAv2.csv')    
+    df.Datetime = pd.to_datetime(df.Datetime)
+    qqq2=pd.read_csv('DIAall.csv')
     qqq2=calcfeatures(qqq2)
     qqq2=qqq2[['ma10','ma20','ma200','Date']]
     df_all = pd.merge(df,qqq2,how='inner',left_on='Date',right_on='Date')
     
     df=df_all
-    
-    divdf = pd.read_csv('qqqdiv.csv')
-    divdf['Datetime']=pd.to_datetime(divdf.Date)
-    for i in tqdm(range(len(divdf.index))):
-        divdf.loc[i,'Date'] = divdf.loc[i,'Datetime'].strftime('%Y-%m-%d')
-    divdf.drop('Datetime',axis=1,inplace=True)
-    df = pd.merge(df,divdf,how='left',on='Date')
+    dfintra = df
+#    divdf = pd.read_csv('qqqdiv.csv')
+#    divdf['Datetime']=pd.to_datetime(divdf.Date)
+#    for i in tqdm(range(len(divdf.index))):
+#        divdf.loc[i,'Date'] = divdf.loc[i,'Datetime'].strftime('%Y-%m-%d')
+#    divdf.drop('Datetime',axis=1,inplace=True)
+#    df = pd.merge(df,divdf,how='left',on='Date')
     
     def binExtended(dfintra):
         extHigh,extLow=0,999999
@@ -177,9 +179,9 @@ def adjustPrice(df):
     
     cols=['Date', 'Time', 'Volume', 'Datetime',
            'dayOpen', 'dayHigh', 'dayLow', 'dayClose', 'ma10', 'ma20', 'ma200',
-           'preHigh', 'preLow', 'div']
+           'preHigh', 'preLow']#, 'div']
     dfdayext3 = dfdayext2[cols]
-    dfdayext3.to_csv('dfdayextdiv.csv',index=False)
+    dfdayext3.to_csv('DIAdfdayext.csv',index=False)
     
     
     dfintra.drop(['ma10','ma20','ma200'],axis=1,inplace=True)
@@ -193,4 +195,4 @@ def adjustPrice(df):
         tmp.reset_index(inplace=True,drop=True)
         dfintradict[d]=tmp
         
-    np.save('dfintradict.npy',dfintradict)
+    np.save('DIAdfintradict.npy',dfintradict)

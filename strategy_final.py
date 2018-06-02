@@ -15,18 +15,29 @@ import datetime
 
 pretradingdate = pd.Timestamp(2017,2,9)
  
-def triplessdivextreturn(df,dfintradict,t7,t8,t='10:00'):
+def triplessdivextreturn(df,dfintradict,t='10:00'):
     t1 = 1.007
     t2 = .985
     t3 = 1.0114
     t4 = .995
     t5=1.0004
     t6 = 1.0003
-#    t7 = 1.0007
-#    t8 = 1.08
-    t9 = 1.005
+    t7 = 1.0008
+    t8 = 1.08
+    t9 = 1.007
     t10 = .88
-    th=1.011
+    th=1.012
+#    t1 = 1.008
+#    t2 = .985
+#    t3 = 1.0117
+#    t4 = .982
+#    t5=1.0004
+#    t6 = 1.0005
+#    t7 = 1.001
+#    t8 = 1.08
+#    t9 = 1.005
+#    t10 = .88
+#    th=1.011    
     profit = 1
     profits=[]
 #    monthlyprof = [1]   
@@ -110,20 +121,20 @@ def checkOutTime(df,p):
 
 def testssreturnext(df,dfintradict):
     profits = triplessdivextreturn(df,dfintradict)
-    print("{:,}".format(np.prod(profits)/1e8))
+    print("{:,}".format(np.prod(profits)))
     print(gmean(profits))
     print(calcannualreturn(profits,df))
     
 
-dfdayext3 = pd.read_csv('dfdayextdiv.csv')
+dfdayext3 = pd.read_csv('dfdayext3div.csv')
 dfdayext3['Datetime']=pd.to_datetime(dfdayext3.Date)
 
-dfintradict = np.load('dfintradict.npy').item()
+dfintradict = np.load('QQQdfintradict.npy').item()
 
-#testssreturnext(dfdayext3,dfintradict)
+testssreturnext(dfdayext3,dfintradict)
 #
 #testssreturnext(dfdaytrain,dfintradict)
-#
+##
 #testssreturnext(dfdaytest,dfintradict)
 
 #
@@ -145,12 +156,13 @@ dfintradict = np.load('dfintradict.npy').item()
 #t6 = 1.0005
 #th = 1.01
 #
-p=[]
-para=[]
-for t1 in tqdm(np.arange(.995,1.005,.001)):
-    for t2 in np.arange(.85,.95,0.01):
-        p.append(np.prod(triplessdivextreturn(dfdayext3,dfintradict,t1,t2)))
-        para.append([t1,t2])
+#p=[]
+#para=[]
+##for t1 in tqdm(np.arange(1.004,1.007,.001)):
+#t1 = 1.001
+#for t2 in tqdm(np.arange(1.005,1.015,0.001)):
+#    p.append(np.prod(triplessdivextreturn(dfdayext3,dfintradict,t2)))
+#    para.append([t1,t2])
 #
 #
 #p=[]

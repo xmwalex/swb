@@ -15,7 +15,7 @@ import datetime
 
 pretradingdate = pd.Timestamp(2017,2,9)
  
-def triplessdivextreturn(df,dfintradict,t='10:30'):
+def triplessdivextreturn(df,dfintradict):
     t1 = 1.008
     t2 = .985
     t3 = 1.0117
@@ -33,16 +33,12 @@ def triplessdivextreturn(df,dfintradict,t='10:30'):
 #    prevmon = '03'
     for i in range(2,len(df)):     
         profit=1
-        dftmp = dfintradict[df.loc[i,'Date']]
-        try:
-            dayOpen = dftmp[dftmp['Time']==t].iloc[0].Open
-        except:
-            dayOpen = df.loc[i,'dayOpen']            
-        preLow = min(min(dftmp[dftmp.Datetime<dftmp[dftmp['Time']==t].iloc[0].Datetime].Low),df.loc[i].preLow)
-        preHigh = max(max(dftmp[dftmp.Datetime<dftmp[dftmp['Time']==t].iloc[0].Datetime].High),df.loc[i].preHigh)
-        dayLow = min(min(dftmp[dftmp.Datetime>=dftmp[dftmp['Time']==t].iloc[0].Datetime].Low))
-        dayHigh = max(max(dftmp[dftmp.Datetime>=dftmp[dftmp['Time']==t].iloc[0].Datetime].High))
+        dayOpen = df.loc[i,'dayOpen']
+        dayHigh = df.loc[i,'dayHigh']
+        dayLow = df.loc[i,'dayLow']
         dayClose = df.loc[i,'dayClose']
+        preLow = df.loc[i,'preLow']
+        preHigh = df.loc[i,'preHigh']
         if df.loc[i-1,'dayClose']>t7*df.loc[i-2,'dayClose'] and df.loc[i-2,'ma20']>t8:
             profit = (1-df.loc[i,'dayClose']/df.loc[i-1,'dayClose'])*3+1#short
         elif(df.loc[i-1,'dayClose']/df.loc[i-1,'dayOpen']>t9 and df.loc[i-1,'ma10']>t10):
@@ -101,21 +97,21 @@ def checkOutTime(df,p):
 
 def testssreturnext(df,dfintradict):
     profits = triplessdivextreturn(df,dfintradict)
-    print("{:,}".format(np.prod(profits)/1e8))
+    print("{:,}".format(np.prod(profits)))
     print(gmean(profits))
     print(calcannualreturn(profits,df))
     
 
-dfdayext3 = pd.read_csv('dfdayextdiv.csv')
+dfdayext3 = pd.read_csv('dfdayext3div.csv')
 dfdayext3['Datetime']=pd.to_datetime(dfdayext3.Date)
 
-dfintradict = np.load('dfintradict.npy').item()
+dfintradict = np.load('QQQdfintradict.npy').item()
 
 testssreturnext(dfdayext3,dfintradict)
-
-testssreturnext(dfdaytrain,dfintradict)
-
-testssreturnext(dfdaytest,dfintradict)
+##
+#testssreturnext(dfdaytrain,dfintradict)
+##
+#testssreturnext(dfdaytest,dfintradict)
 
 #
 ## best result on train
@@ -134,24 +130,24 @@ testssreturnext(dfdaytest,dfintradict)
 #t4 = .978
 #t5=1.0004
 #t6 = 1.0005
-#th = 1.01
+##th = 1.01
+##
+#p=[]
+#para=[]
+#for t1 in tqdm(np.arange(1.00,1.02,.001)):
+#    for t2 in np.arange(1.01,1.1,0.01):
+#        p.append(np.prod(triplessdivextreturn(dfdayext3,dfintradict,t1,t2)))
+#        para.append([t1,t2])
 #
-p=[]
-para=[]
-for t1 in tqdm(np.arange(1.00,1.02,.001)):
-    for t2 in np.arange(1.01,1.1,0.01):
-        p.append(np.prod(triplessdivextreturn(dfdayext3,dfintradict,t1,t2)))
-        para.append([t1,t2])
-
-
-p=[]
-para=[]
-for t1 in tqdm(np.arange(1,1.01,.001)):
-        p.append(np.prod(triplessdivextreturn(dfdayext3,dfintradict,t1)))
-        para.append(t1)
-
-p=[]
-para = ['9:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00']
-for i in tqdm(range(len(para))):
-    t = para[i]
-    p.append(np.prod(triplessdivextreturn(dfdayext3,dfintradict,t)))
+#
+#p=[]
+#para=[]
+#for t1 in tqdm(np.arange(1,1.01,.001)):
+#        p.append(np.prod(triplessdivextreturn(dfdayext3,dfintradict,t1)))
+#        para.append(t1)
+#
+#p=[]
+#para = ['9:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00']
+#for i in tqdm(range(len(para))):
+#    t = para[i]
+#    p.append(np.prod(triplessdivextreturn(dfdayext3,dfintradict,t)))
