@@ -1,0 +1,115 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed May 30 06:47:41 2018
+
+@author: xmw
+"""
+
+
+import pandas as pd
+from scipy.stats import gmean
+import matplotlib.pyplot as plt
+import numpy as np
+from tqdm import tqdm
+
+#dfdayext3.to_csv('dfdayext3div.csv',index=False)
+dfdayext3 = pd.read_csv('dfdayextdiv.csv')
+dfdayext3['Datetime']=pd.to_datetime(dfdayext3.Date)
+
+dfintradict = np.load('dfintradict.npy').item()
+
+#%%cython
+#import numpy as np
+def triplessdivextreturn(df,dfintradict,th=1.01):
+    t5=1.001
+    t2=.985
+    t3=1.012
+    t1=1.006
+    t4=.988
+    t6=.9994
+    profit = 1
+    profits=[]
+    profits2=[]
+    monthlyprof = [1]   
+    prevmon = '03'
+    for i in range(3,len(df)):     
+        profit=1
+        if df.loc[i-1,'dayClose']>1.01*df.loc[i-2,'dayClose'] and df.loc[i-2,'ma20']>1.08:
+            profit = (1-df.loc[i,'dayClose']/df.loc[i-1,'dayClose'])*3+1#short
+        elif(df.loc[i-1,'dayClose']/df.loc[i-1,'dayOpen']>1.005 and df.loc[i-1,'ma10']>.88):
+            if df.loc[i,'preHigh']>th*df.loc[i-1,'dayClose']:
+                profit = 3*th-2
+            else:
+                profit = (df.loc[i,'dayOpen']/df.loc[i-1,'dayClose']-1)*3+1#buy
+            profits.append(profit-1e-4)
+            if df.loc[i,'dayLow']<.925*df.loc[i,'dayOpen']:
+                profit = (1-.925)*3+1
+            else:
+                profit = (1-df.loc[i,'dayClose']/df.loc[i,'dayOpen'])*3+1#short
+        elif df.loc[i,'preHigh']>th*df.loc[i-1,'dayClose']:
+            profit = 3*th-2
+            if df.loc[i,'dayLow']<t2*df.loc[i,'dayOpen']:
+                profits.append(profit-1e-4)
+                profit = (df.loc[i,'dayClose']/(t2*df.loc[i,'dayOpen'])-1)*3+1
+                profits2.append(profit)
+        elif df.loc[i,'dayOpen']/df.loc[i-1,'dayClose']>t1:
+            profit = (((df.loc[i,'dayClose'])/df.loc[i-1,'dayClose'])-1)*3+1
+        elif df.loc[i,'dayOpen']/df.loc[i-1,'dayClose']<t4:
+            profit = (((df.loc[i,'dayClose'])/df.loc[i-1,'dayClose'])-1)*3+1
+        elif df.loc[i,'dayOpen']/df.loc[i-1,'dayClose']<t6:
+            earlyOut=0
+            if df.loc[i,'dayHigh']/df.loc[i,'dayOpen']>t3:
+#                print(i)
+                outTime = checkOutTime(dfintradict[df.loc[i,'Date']],t3*df.loc[i,'dayOpen'])
+#                print(int(outTime.split(':')[0]))
+                if int(outTime.split(':')[0])<13:
+                    profit = (t3*df.loc[i,'dayOpen']/df.loc[i-1,'dayClose']-1)*3+1                
+                    earlyOut=1
+            if earlyOut==0:
+                profit = (df.loc[i,'dayClose']/df.loc[i-1,'dayClose']-1)*3+1
+        elif df.loc[i,'dayHigh']/df.loc[i,'dayOpen']>t5:
+            profit = (t5*df.loc[i,'dayOpen']/df.loc[i-1,'dayClose']-1)*3+1
+        else:
+            profit = (df.loc[i,'dayClose']/df.loc[i-1,'dayClose']-1)*3+1
+        if profit!=1:
+            profits.append(profit-1e-4)
+        if ~np.isnan(df.loc[i,'div']):
+#            print(df_all.loc[i,'div'])
+            profits.append(df.loc[i,'div']/df.loc[i,'dayClose']+1)
+#        cdiff = round(df.loc[i,'Adj Close']-df.loc[i,'Close'],2)
+#        if cdiff!=prevdiff:
+#            profits.append(abs(cdiff-prevdiff)/df.loc[i,'Close']+1)
+        if (df.loc[i,'Date']).split('-')[1]!=prevmon:
+            monthlyprof.append(np.prod(profits))
+            prevmon = (df.loc[i,'Date']).split('-')[1]
+    monthlyprof.append(np.prod(profits))
+    for i in range(len(monthlyprof)-1,0,-1):
+        monthlyprof[i]=monthlyprof[i]/monthlyprof[i-1]
+    return profits
+
+
+
+def checkOutTime(df,p):
+    for i in range(len(df)):
+        if df.loc[i,'High']>p:
+            return df.loc[i,'Time']
+    return 'None'
+##########%%%%
+#
+#p=[]
+#para=[]    
+#t1 = 1.008
+#for t2 in np.arange(.98,1,0.005):
+#    for t3 in np.arange(1.001,1.02,0.001):
+#        for t4 in np.arange(.985,.995,0.001):                
+#            for t5 in np.arange(1,1.01,0.001):
+#                for t6 in np.arange(.999,1.0,0.0001):
+#                    para.append((t1,t2,t3,t4,t5,t6))
+#
+#import gc
+#p=[0]*len(para)
+#for pa in tqdm(range(len(para))):
+#    [t1,t2,t3,t4,t5,t6]=para[pa]
+#    p[pa] = np.prod(triplessdivextreturn(dfdayext3,dfintradict,t1,t2,t3,t4,t5,t6))
+#    gc.collect()

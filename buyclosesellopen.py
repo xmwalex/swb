@@ -416,30 +416,28 @@ testssreturn(kqqqdu2)
 
 qqqdiv=pd.read_csv('qqqdiv.csv')
 
-p=[]
-para=[]
 for t1 in np.arange(1.003,1.009,0.001):
-    for t2 in np.arange(.98,1,0.005):
-        for t3 in np.arange(1.001,1.02,0.001):
-            for t4 in np.arange(.985,.995,0.001):                
-                for t5 in np.arange(1,1.01,0.001):
-                    for t6 in np.arange(.999,1.0,0.0001):
-                        para.append((t1,t2,t3,t4,t5,t6))
 
-import multiprocessing
-from itertools import product
-with multiprocessing.Pool(processes=2) as pool:
-    results = pool.map(ups,para)
+p=[]
+para=[]    
+t1 = 1.003
+for t2 in np.arange(.98,1,0.005):
+    for t3 in np.arange(1.001,1.02,0.001):
+        for t4 in np.arange(.985,.995,0.001):                
+            for t5 in np.arange(1,1.01,0.001):
+                for t6 in np.arange(.999,1.0,0.0001):
+                    para.append((t1,t2,t3,t4,t5,t6))
+
+#import multiprocessing
+#from itertools import product
+#with multiprocessing.Pool(processes=2) as pool:
+#    results = pool.map(ups,para)
 
 
 p=[0]*len(para)
 for pa in tqdm(range(len(para))):
-    p[pa] = ups(dfdayext3,para[pa])
-    
-def ups(df,pas):
-    [t1,t2,t3,t4,t5,t6]=pas
-    profits = triplessdivextreturn(df,dfintradict,t1,t2,t3,t4,t5,t6)
-    return np.prod(profits)
+    [t1,t2,t3,t4,t5,t6]=para[pa]
+    p[pa] = triplessdivextreturn(dfdayext3,dfintradict,t1,t2,t3,t4,t5,t6)
 
 %%cython
 import numpy as np
