@@ -568,3 +568,9 @@ dfdayext3 = pd.read_csv('dfdayextdiv.csv')
 dfdayext3['Datetime']=pd.to_datetime(dfdayext3.Date)
 
 dfintradict = np.load('dfintradict.npy').item()
+
+
+
+for i in range(len(dfdayext3)):
+    if dfdayext3.loc[i,'preHigh']<dfdayext3.loc[i,'dayOpen'] or dfdayext3.loc[i,'preLow']>dfdayext3.loc[i,'dayOpen']:
+        print(i)

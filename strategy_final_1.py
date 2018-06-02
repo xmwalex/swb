@@ -15,15 +15,15 @@ import datetime
 
 pretradingdate = pd.Timestamp(2017,2,9)
  
-def triplessdivextreturn(df,dfintradict,t7,t8,t='10:00'):
-    t1 = 1.007
+def triplessdivextreturn(df,dfintradict,t='10:30'):
+    t1 = 1.008
     t2 = .985
-    t3 = 1.0114
-    t4 = .995
+    t3 = 1.0117
+    t4 = .982
     t5=1.0004
-    t6 = 1.0003
-#    t7 = 1.0007
-#    t8 = 1.08
+    t6 = 1.0005
+    t7 = 1.001
+    t8 = 1.08
     t9 = 1.005
     t10 = .88
     th=1.011
@@ -38,52 +38,43 @@ def triplessdivextreturn(df,dfintradict,t7,t8,t='10:00'):
             dayOpen = dftmp[dftmp['Time']==t].iloc[0].Open
         except:
             dayOpen = df.loc[i,'dayOpen']            
-        try:
-            preLow = min(min(dftmp[dftmp.Datetime<dftmp[dftmp['Time']==t].iloc[0].Datetime].Low),df.loc[i].preLow)
-            preHigh = max(max(dftmp[dftmp.Datetime<dftmp[dftmp['Time']==t].iloc[0].Datetime].High),df.loc[i].preHigh)
-        except:
-            preLow=dayOpen
-            preHigh=dayOpen
-#            print(i)
-        try:
-            dayLow = min(dftmp[dftmp.Datetime>=dftmp[dftmp['Time']==t].iloc[0].Datetime].Low)
-            dayHigh = max(dftmp[dftmp.Datetime>=dftmp[dftmp['Time']==t].iloc[0].Datetime].High)
-        except:
-            dayLow = min(dftmp.Low)
-            dayHigh = max(dftmp.High)
+        preLow = min(min(dftmp[dftmp.Datetime<dftmp[dftmp['Time']==t].iloc[0].Datetime].Low),df.loc[i].preLow)
+        preHigh = max(max(dftmp[dftmp.Datetime<dftmp[dftmp['Time']==t].iloc[0].Datetime].High),df.loc[i].preHigh)
+        dayLow = min(min(dftmp[dftmp.Datetime>=dftmp[dftmp['Time']==t].iloc[0].Datetime].Low))
+        dayHigh = max(max(dftmp[dftmp.Datetime>=dftmp[dftmp['Time']==t].iloc[0].Datetime].High))
         dayClose = df.loc[i,'dayClose']
         if df.loc[i-1,'dayClose']>t7*df.loc[i-2,'dayClose'] and df.loc[i-2,'ma20']>t8:
             profit = (1-df.loc[i,'dayClose']/df.loc[i-1,'dayClose'])*3+1#short
         elif(df.loc[i-1,'dayClose']/df.loc[i-1,'dayOpen']>t9 and df.loc[i-1,'ma10']>t10):
-            if preHigh>th*df.loc[i-1,'dayClose'] or dayOpen>th*df.loc[i-1,'dayClose']:
+            if df.loc[i,'preHigh']>th*df.loc[i-1,'dayClose'] or dayOpen>th*df.loc[i-1,'dayClose']:
                 profit = 3*th-2
             else:
                 profit = (dayOpen/df.loc[i-1,'dayClose']-1)*3+1#buy
             profits.append(profit-1e-4)
-            if dayLow<.925*dayOpen:#short
+            if df.loc[i,'dayLow']<.925*dayOpen:#short
                 profit = (1-.925)*3+1
             else:
                 profit = (1-df.loc[i,'dayClose']/dayOpen)*3+1#short
-        elif preHigh>th*df.loc[i-1,'dayClose'] or dayOpen>th*df.loc[i-1,'dayClose']:
+        elif df.loc[i,'preHigh']>th*df.loc[i-1,'dayClose'] or dayOpen>th*df.loc[i-1,'dayClose']:
             profit = 3*th-2#buy
-            if dayLow<t2*dayOpen:
+            if df.loc[i,'dayLow']<t2*dayOpen:
                 profits.append(profit-1e-4)
-                profit = (dayClose/(t2*dayOpen)-1)*3+1
+                profit = (df.loc[i,'dayClose']/(t2*dayOpen)-1)*3+1
         elif dayOpen/df.loc[i-1,'dayClose']>t1:
 #            print('wrong'+str(i))
-            profit = ((dayClose/df.loc[i-1,'dayClose'])-1)*3+1
+            profit = (((df.loc[i,'dayClose'])/df.loc[i-1,'dayClose'])-1)*3+1
         elif dayOpen/df.loc[i-1,'dayClose']<t4:
             profit = (((df.loc[i,'dayClose'])/df.loc[i-1,'dayClose'])-1)*3+1
         elif dayOpen/df.loc[i-1,'dayClose']<t6:
             earlyOut=0
-            if dayHigh/dayOpen>t3:
+            if df.loc[i,'dayHigh']/dayOpen>t3:
                 outTime = checkOutTime(dfintradict[df.loc[i,'Date']],t3*dayOpen)
                 if int(outTime.split(':')[0])<13:
                     profit = (t3*dayOpen/df.loc[i-1,'dayClose']-1)*3+1                
                     earlyOut=1
             if earlyOut==0:
                 profit = (df.loc[i,'dayClose']/df.loc[i-1,'dayClose']-1)*3+1
-        elif dayHigh/dayOpen>t5:
+        elif df.loc[i,'dayHigh']/dayOpen>t5:
             profit = (t5*dayOpen/df.loc[i-1,'dayClose']-1)*3+1
         else:
             profit = (df.loc[i,'dayClose']/df.loc[i-1,'dayClose']-1)*3+1
@@ -120,11 +111,11 @@ dfdayext3['Datetime']=pd.to_datetime(dfdayext3.Date)
 
 dfintradict = np.load('dfintradict.npy').item()
 
-#testssreturnext(dfdayext3,dfintradict)
-#
-#testssreturnext(dfdaytrain,dfintradict)
-#
-#testssreturnext(dfdaytest,dfintradict)
+testssreturnext(dfdayext3,dfintradict)
+
+testssreturnext(dfdaytrain,dfintradict)
+
+testssreturnext(dfdaytest,dfintradict)
 
 #
 ## best result on train
@@ -147,20 +138,20 @@ dfintradict = np.load('dfintradict.npy').item()
 #
 p=[]
 para=[]
-for t1 in tqdm(np.arange(.995,1.005,.001)):
-    for t2 in np.arange(.85,.95,0.01):
+for t1 in tqdm(np.arange(1.00,1.02,.001)):
+    for t2 in np.arange(1.01,1.1,0.01):
         p.append(np.prod(triplessdivextreturn(dfdayext3,dfintradict,t1,t2)))
         para.append([t1,t2])
-#
-#
-#p=[]
-#para=[]
-#for t1 in tqdm(np.arange(1.001,1.0015,.0001)):
-#        p.append(np.prod(triplessdivextreturn(dfdayext3,dfintradict,t1)))
-#        para.append(t1)
 
-#p=[]
-#para = ['10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00']
-#for i in tqdm(range(len(para))):
-#    t = para[i]
-#    p.append(np.prod(triplessdivextreturn(dfdayext3,dfintradict,t)))
+
+p=[]
+para=[]
+for t1 in tqdm(np.arange(1,1.01,.001)):
+        p.append(np.prod(triplessdivextreturn(dfdayext3,dfintradict,t1)))
+        para.append(t1)
+
+p=[]
+para = ['9:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00']
+for i in tqdm(range(len(para))):
+    t = para[i]
+    p.append(np.prod(triplessdivextreturn(dfdayext3,dfintradict,t)))
