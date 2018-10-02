@@ -15,67 +15,77 @@ import datetime
 
 pretradingdate = pd.Timestamp(2017,2,9)
  
-def triplessdivextreturn(df,dfintradict,t='10:00'):
-    t1 = 1.007
-    t2 = .985
-    t3 = 1.0114
-    t4 = .995
-    t5=1.0004
-    t6 = 1.0003
-    t7 = 1.0008
-    t8 = 1.08
-    t9 = 1.007
-    t10 = .88
-    th=1.012
-#    t1 = 1.008
+def triplessdivextreturn(df,dfintradict,t='10:30'):
+#    t1 = 1.007
 #    t2 = .985
-#    t3 = 1.0117
-#    t4 = .982
+#    t3 = 1.0114
+#    t4 = .995
 #    t5=1.0004
-#    t6 = 1.0005
+#    t6 = 1.0003
 #    t7 = 1.001
 #    t8 = 1.08
-#    t9 = 1.005
+#    t9 = 1.007
 #    t10 = .88
-#    th=1.011    
+#    t11 = .97
+#    th=1.012
+    t1 = 1.008
+    t2 = .985
+    t3 = 1.0117
+    t4 = .982
+    t5=1.0004
+    t6 = 1.0005
+    t7 = 1.001
+    t8 = 1.08
+    t9 = 1.005
+    t10 = .88
+    th=1.011    
+    t11=.925
+    t13 = .999
     profit = 1
     profits=[]
-#    monthlyprof = [1]   
-#    prevmon = '03'
+    monthlyprof = [1]   
+    prevmon = '03'
     for i in range(2,len(df)):     
         profit=1
-        dftmp = dfintradict[df.loc[i,'Date']]
-        try:
-            dayOpen = dftmp[dftmp['Time']==t].iloc[0].Open
-        except:
-            dayOpen = df.loc[i,'dayOpen']            
-        try:
-            preLow = min(min(dftmp[dftmp.Datetime<dftmp[dftmp['Time']==t].iloc[0].Datetime].Low),df.loc[i].preLow)
-            preHigh = max(max(dftmp[dftmp.Datetime<dftmp[dftmp['Time']==t].iloc[0].Datetime].High),df.loc[i].preHigh)
-        except:
-            preLow=dayOpen
-            preHigh=dayOpen
-#            print(i)
-        try:
-            dayLow = min(dftmp[dftmp.Datetime>=dftmp[dftmp['Time']==t].iloc[0].Datetime].Low)
-            dayHigh = max(dftmp[dftmp.Datetime>=dftmp[dftmp['Time']==t].iloc[0].Datetime].High)
-        except:
-            dayLow = min(dftmp.Low)
-            dayHigh = max(dftmp.High)
+        dayOpen = df.loc[i,'dayOpen']
+        dayHigh = df.loc[i,'dayHigh']
+        dayLow = df.loc[i,'dayLow']
         dayClose = df.loc[i,'dayClose']
+        preLow = df.loc[i,'preLow']
+        preHigh = df.loc[i,'preHigh']
+
         if df.loc[i-1,'dayClose']>t7*df.loc[i-2,'dayClose'] and df.loc[i-2,'ma20']>t8:
             profit = (1-df.loc[i,'dayClose']/df.loc[i-1,'dayClose'])*3+1#short
         elif(df.loc[i-1,'dayClose']/df.loc[i-1,'dayOpen']>t9 and df.loc[i-1,'ma10']>t10):
-            if preHigh>th*df.loc[i-1,'dayClose'] or dayOpen>th*df.loc[i-1,'dayClose']:
+            dftmp = dfintradict[df.loc[i,'Date']]
+            try:
+                dayOpen = dftmp[dftmp['Time']==t].iloc[0].Open
+            except:
+                dayOpen = df.loc[i,'dayOpen']            
+            try:
+                preLow = min(min(dftmp[dftmp.Datetime<dftmp[dftmp['Time']==t].iloc[0].Datetime].Low),df.loc[i].preLow)
+                preHigh = max(max(dftmp[dftmp.Datetime<dftmp[dftmp['Time']==t].iloc[0].Datetime].High),df.loc[i].preHigh)
+            except:
+                preLow=dayOpen
+                preHigh=dayOpen
+    #            print(i)
+            try:
+                dayLow = min(dftmp[dftmp.Datetime>=dftmp[dftmp['Time']==t].iloc[0].Datetime].Low)
+                dayHigh = max(dftmp[dftmp.Datetime>=dftmp[dftmp['Time']==t].iloc[0].Datetime].High)
+            except:
+                dayLow = min(dftmp.Low)
+                dayHigh = max(dftmp.High)
+            
+            if preHigh>th*df.loc[i-1,'dayClose'] or dayOpen>th*df.loc[i-1,'dayClose']  and (preHigh<1.15*df.loc[i-1,'dayClose'] or preHigh<1.07*dayOpen):
                 profit = 3*th-2
             else:
                 profit = (dayOpen/df.loc[i-1,'dayClose']-1)*3+1#buy
             profits.append(profit-1e-4)
-            if dayLow<.925*dayOpen:#short
-                profit = (1-.925)*3+1
+            if dayLow<t11*dayOpen:#short
+                profit = (1-t11)*3+1
             else:
                 profit = (1-df.loc[i,'dayClose']/dayOpen)*3+1#short
-        elif preHigh>th*df.loc[i-1,'dayClose'] or dayOpen>th*df.loc[i-1,'dayClose']:
+        elif preHigh>th*df.loc[i-1,'dayClose'] or dayOpen>th*df.loc[i-1,'dayClose'] and (preHigh<1.15*df.loc[i-1,'dayClose'] or preHigh<1.07*dayOpen):
             profit = 3*th-2#buy
             if dayLow<t2*dayOpen:
                 profits.append(profit-1e-4)
@@ -95,6 +105,18 @@ def triplessdivextreturn(df,dfintradict,t='10:00'):
             if earlyOut==0:
                 profit = (df.loc[i,'dayClose']/df.loc[i-1,'dayClose']-1)*3+1
         elif dayHigh/dayOpen>t5:
+            earlyOut=0
+            if dayHigh/dayOpen>t5:
+                outTime = checkOutTime(dfintradict[df.loc[i,'Date']],t5*dayOpen)
+                if outTime in {'9:30'}:
+                    earlyOut=1
+            if earlyOut==1:
+                dftmp = dfintradict[df.loc[i,'Date']]
+                if dftmp[dftmp['Time']=='10:00'].iloc[0].Open<t6*df.loc[i-1,'dayClose']:
+                    dayLow = min(dftmp[dftmp.Datetime>=dftmp[dftmp['Time']=='10:00'].iloc[0].Datetime].Low)
+                    if dayLow<t13*dftmp[dftmp['Time']=='10:00'].iloc[0].Open:
+                        pin = t13*dftmp[dftmp['Time']=='10:00'].iloc[0].Open
+                        profits.append((dayClose/pin-1)*3+1)
             profit = (t5*dayOpen/df.loc[i-1,'dayClose']-1)*3+1
         else:
             profit = (df.loc[i,'dayClose']/df.loc[i-1,'dayClose']-1)*3+1
@@ -102,12 +124,12 @@ def triplessdivextreturn(df,dfintradict,t='10:00'):
             profits.append(profit-1e-4)
         if ~np.isnan(df.loc[i,'div']):
             profits.append(df.loc[i,'div']/df.loc[i,'dayClose']+1)
-#        if (df.loc[i,'Date']).split('-')[1]!=prevmon:
-#            monthlyprof.append(np.prod(profits))
-#            prevmon = (df.loc[i,'Date']).split('-')[1]
-#    monthlyprof.append(np.prod(profits))
-#    for i in range(len(monthlyprof)-1,0,-1):
-#        monthlyprof[i]=monthlyprof[i]/monthlyprof[i-1]
+        if (df.loc[i,'Date']).split('-')[1]!=prevmon:
+            monthlyprof.append(np.prod(profits))
+            prevmon = (df.loc[i,'Date']).split('-')[1]
+    monthlyprof.append(np.prod(profits))
+    for i in range(len(monthlyprof)-1,0,-1):
+        monthlyprof[i]=monthlyprof[i]/monthlyprof[i-1]
     return profits
 
 def calcannualreturn(profits,df):
@@ -132,6 +154,11 @@ dfdayext3['Datetime']=pd.to_datetime(dfdayext3.Date)
 dfintradict = np.load('QQQdfintradict.npy').item()
 
 testssreturnext(dfdayext3,dfintradict)
+#
+dfdayl10 = dfdayext3.loc[2700:]
+dfdayl10.reset_index(inplace=True,drop=True)
+testssreturnext(dfdayl10,dfintradict)
+
 #
 #testssreturnext(dfdaytrain,dfintradict)
 ##
@@ -164,11 +191,11 @@ testssreturnext(dfdayext3,dfintradict)
 #    p.append(np.prod(triplessdivextreturn(dfdayext3,dfintradict,t2)))
 #    para.append([t1,t2])
 #
-#
+##
 #p=[]
 #para=[]
-#for t1 in tqdm(np.arange(1.001,1.0015,.0001)):
-#        p.append(np.prod(triplessdivextreturn(dfdayext3,dfintradict,t1)))
+#for t1 in tqdm(np.arange(.98,1.0,.001)):
+#        p.append(np.prod(triplessdivextreturn(dfdayl10,dfintradict,t1)))
 #        para.append(t1)
 
 #p=[]

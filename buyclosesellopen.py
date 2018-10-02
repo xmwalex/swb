@@ -111,13 +111,21 @@ def nodivcoreturn(df):
 def triplereturn(df):
     profit = 1
     for i in range(1,len(df)):
-        profit = profit * ((df.loc[i,'Adj Close']/df.loc[i-1,'Adj Close']-1)*3+1-8e-5)
+        profit = profit * ((df.loc[i,'Adj Close']/df.loc[i-1,'Adj Close']-1)*3+1)
     return profit
 
 
 def holdreturn(df):
     adjcl = list(df['Adj Close'])
     return adjcl[-1]/adjcl[0]
+
+def leverageReturn(df,lev,marginrate):
+    adjcl = list(df['Adj Close'])
+    moneyin = adjcl[0]*1
+    share = lev
+    marginrate = marginrate**(1/250)-1
+    return ((share*adjcl[-1]/moneyin)**(1/len(df))-marginrate*(lev-1))**(len(df))
+
 #
 #print(totalreturn(qqq))
 #
@@ -150,15 +158,20 @@ profit=1
     
     
 
-def testdist(df,t):
-    if t<1:
-        df1 = df[df['gap']<t]
-    else:
-        df1 = df[df['gap']>t]
-    d = df1['Close']/df1['Open']
-    print(np.mean(d))
-    print(len(d))
-    print(np.median(d))
+def testdist(df):
+    profits=[]
+    for i in range(2,len(df)):
+        if df.loc[i-1,'dayClose']>.992*df.loc[i-1,'dayOpen']:
+            profits.append(i)
+#            profits.append((df.loc[i,'dayClose']/df.loc[i,'dayOpen']-1)*3+1)
+#    for i in range(len(df)):
+#        dftmp = dfintradict[df.loc[i,'Date']]
+#        try:
+#            if dftmp[dftmp['Time']==t].Close.iloc[0]<t2*dftmp[dftmp['Time']==t].dayOpen.iloc[0]:
+#                profits.append((1-df.loc[i,'dayClose']/dftmp[dftmp['Time']==t].Close.iloc[0])*3+1)
+#        except:
+#            print(i)
+    return profits
 
 from tqdm import tqdm
 p=[]
@@ -167,6 +180,16 @@ for th in tqdm(np.arange(.9,1,.01)):
     profits = triplessdivextreturn(dfdayext3,th)
     p.append(np.prod(profits))
     para.append(th)
+
+# 9:30, .998
+p=[]
+para=[]
+for t2 in tqdm(np.arange(.98,.999,0.001)):
+    for th in {'12:00','12:30','13:00','13:30','14:00','14:30','15:00'}:
+        profits = testdist(dfdayext3,th,t2)
+        p.append(np.prod(profits))
+        para.append([th,t2])
+
 
 p=[]
 para = []
@@ -569,8 +592,15 @@ dfdayext3['Datetime']=pd.to_datetime(dfdayext3.Date)
 
 dfintradict = np.load('dfintradict.npy').item()
 
-
-
 for i in range(len(dfdayext3)):
     if dfdayext3.loc[i,'preHigh']<dfdayext3.loc[i,'dayOpen'] or dfdayext3.loc[i,'preLow']>dfdayext3.loc[i,'dayOpen']:
         print(i)
+
+profits=[]
+weights=[1]
+for i in np.arange(0,len(qqqall)-250,21):
+    df = qqqall.loc[i:]
+    df.reset_index(drop=True,inplace=True)
+#    profits.append(triplereturn(df)*weights[-1])
+    weights.append(weights[-1]*1.0025)
+    profits.append(calcannualreturn(triplereturn(df),df))
