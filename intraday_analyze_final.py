@@ -63,8 +63,8 @@ for i in tqdm(range(len(df.index))):
             if backup_c==0:
                 break
         o=df.loc[i,'Open']
-        h = max(h,df.loc[i,'High'])
-        l = min(l,df.loc[i,'Low'])
+#        h = max(h,df.loc[i,'High'])
+#        l = min(l,df.loc[i,'Low'])
         backup_c=0
     elif df.loc[i,'Time']=='16:00':
         c = df.loc[i,'Open']
